@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/springboot_shiro?useUnicode=true&characterEncoding=UTF-8&allowMultiQueries=true&serverTimezone=UTC
+    username: root
+    password: root
+
+#mybatis plus设置
+mybatis-plus:
+  global-config:
+    # 关闭 mybatis-plus启动 banner
+    banner: false
+
+logging:
+  level:
+    com.wk.mapper: debug
