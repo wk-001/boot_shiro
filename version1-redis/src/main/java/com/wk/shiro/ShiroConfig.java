@@ -5,7 +5,6 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.SessionListener;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator;
-import org.apache.shiro.session.mgt.eis.SessionDAO;
 import org.apache.shiro.session.mgt.eis.SessionIdGenerator;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
@@ -15,10 +14,10 @@ import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.crazycake.shiro.RedisCacheManager;
 import org.crazycake.shiro.RedisManager;
 import org.crazycake.shiro.RedisSessionDAO;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import javax.servlet.Filter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,9 +25,11 @@ import java.util.List;
 @Configuration
 public class ShiroConfig {
 
-    private final String CACHE_KEY = "shiro:cache:";
-
-    private final String SESSION_KEY = "shiro:session:";
+    //Redis配置
+    @Value("${spring.redis.host}")
+    private String host;
+    @Value("${spring.redis.timeout}")
+    private int timeout;
 
     /**
      * 配置核心安全事务管理器
@@ -50,13 +51,13 @@ public class ShiroConfig {
     @Bean
     public SessionManager sessionManager(){
 		DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
-        //ShiroSessionManager sessionManager = new ShiroSessionManager();
         List<SessionListener> listeners = new ArrayList<>();
 
         //配置监听
+        listeners.add(sessionListener());
         sessionManager.setSessionListeners(listeners);
         sessionManager.setSessionIdCookie(sessionIdCookie());
-        sessionManager.setSessionDAO(sessionDAO());
+        sessionManager.setSessionDAO(redisSessionDAO());
         sessionManager.setCacheManager(redisCacheManager());
 
         //全局会话超时时间(单位：毫秒)，默认30分钟，暂时设置10秒钟用来测试
@@ -96,14 +97,13 @@ public class ShiroConfig {
      * EnterpriseCacheSessionDAO  提供了缓存功能的会话维护，默认情况下使用MapCache实现，内部使用ConcurrentHashMap保存缓存的会话。
      */
     @Bean
-    public SessionDAO sessionDAO(){
+    public RedisSessionDAO redisSessionDAO(){
         RedisSessionDAO redisSessionDAO = new RedisSessionDAO();
-        redisSessionDAO.setRedisManager(new RedisManager());
+        redisSessionDAO.setRedisManager(redisManager());
         //session在redis中的保存时间,最好大于session会话超时时间
         redisSessionDAO.setExpire(12000);
         //sessionId生成器
         redisSessionDAO.setSessionIdGenerator(sessionIdGenerator());
-        redisSessionDAO.setKeyPrefix(SESSION_KEY);
         return redisSessionDAO;
     }
 
@@ -118,8 +118,8 @@ public class ShiroConfig {
     //配置Redis缓存 存储权限和角色标识
     public RedisCacheManager redisCacheManager(){
         RedisCacheManager redisCacheManager = new RedisCacheManager();
-        redisCacheManager.setRedisManager(new RedisManager());
-        redisCacheManager.setKeyPrefix(CACHE_KEY);
+        redisCacheManager.setRedisManager(redisManager());
+        redisCacheManager.setKeyPrefix("shiro:cache:");
         //redis中针对不同用户缓存,user对象的userName属性
         redisCacheManager.setPrincipalIdFieldName("userName");
         //用户权限信息缓存时间
@@ -198,4 +198,22 @@ public class ShiroConfig {
         return credentialsMatcher;
     }
 
+    /**
+     * Redis管理器
+     */
+    @Bean
+    public RedisManager redisManager() {
+        RedisManager redisManager = new RedisManager();
+        redisManager.setHost(host);
+        redisManager.setTimeout(timeout);
+        return redisManager;
+    }
+
+    /**
+     * 配置session监听
+     */
+    @Bean
+    public SessionListener sessionListener(){
+        return new ShiroSessionListener();
+    }
 }
