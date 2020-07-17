@@ -5,15 +5,14 @@ import org.apache.shiro.mgt.SecurityManager;
 import org.apache.shiro.session.SessionListener;
 import org.apache.shiro.session.mgt.SessionManager;
 import org.apache.shiro.session.mgt.eis.JavaUuidSessionIdGenerator;
-import org.apache.shiro.session.mgt.eis.SessionIdGenerator;
 import org.apache.shiro.spring.security.interceptor.AuthorizationAttributeSourceAdvisor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
 import org.apache.shiro.web.servlet.SimpleCookie;
-import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.crazycake.shiro.RedisCacheManager;
 import org.crazycake.shiro.RedisManager;
 import org.crazycake.shiro.RedisSessionDAO;
+import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,8 +27,6 @@ public class ShiroConfig {
     //Redis配置
     @Value("${spring.redis.host}")
     private String host;
-    @Value("${spring.redis.timeout}")
-    private int timeout;
 
     /**
      * 配置核心安全事务管理器
@@ -45,86 +42,6 @@ public class ShiroConfig {
         //设置session管理器
         securityManager.setSessionManager(sessionManager());
         return securityManager;
-    }
-
-    //配置会话管理器，设定会话超时及保存
-    @Bean
-    public SessionManager sessionManager(){
-		DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
-        List<SessionListener> listeners = new ArrayList<>();
-
-        //配置监听
-        listeners.add(sessionListener());
-        sessionManager.setSessionListeners(listeners);
-        sessionManager.setSessionIdCookie(sessionIdCookie());
-        sessionManager.setSessionDAO(redisSessionDAO());
-        sessionManager.setCacheManager(redisCacheManager());
-
-        //全局会话超时时间(单位：毫秒)，默认30分钟，暂时设置10秒钟用来测试
-		sessionManager.setGlobalSessionTimeout(10000);
-        //删除无效session对象 默认为true
-		sessionManager.setDeleteInvalidSessions(true);
-        //开启定时调度器进行检测过期session 默认为true
-		sessionManager.setSessionValidationSchedulerEnabled(true);
-        //设置session失效的扫描时间(单位：毫秒), 清理用户直接关闭浏览器造成的孤立会话 默认为 1个小时 暂时设置10秒钟用来测试
-		sessionManager.setSessionValidationInterval(10000);
-        //取消url 后面的 JSESSIONID
-        sessionManager.setSessionIdUrlRewritingEnabled(false);
-        return sessionManager;
-    }
-
-    /**
-     * 配置保存sessionId的cookie
-     * 注意：这里的cookie 不是上面的记住我 cookie 记住我需要一个cookie session管理 也需要自己的cookie
-     */
-    @Bean
-    public SimpleCookie sessionIdCookie(){
-        //设置cookie的名称
-        SimpleCookie simpleCookie = new SimpleCookie("sid");
-		/*setcookie的httponly属性设置为true，会增加对xss防护的安全系数
-		只能通过http访问，javascript无法访问
-		防止xss读取cookie*/
-        simpleCookie.setHttpOnly(true);
-        //-1表示浏览器关闭时此cookie失效
-        simpleCookie.setMaxAge(-1);
-        return simpleCookie;
-    }
-
-
-    /**
-     * SessionDAO的作用是为Session提供CRUD并进行持久化的一个shiro组件
-     * MemorySessionDAO 直接在内存中进行会话维护
-     * EnterpriseCacheSessionDAO  提供了缓存功能的会话维护，默认情况下使用MapCache实现，内部使用ConcurrentHashMap保存缓存的会话。
-     */
-    @Bean
-    public RedisSessionDAO redisSessionDAO(){
-        RedisSessionDAO redisSessionDAO = new RedisSessionDAO();
-        redisSessionDAO.setRedisManager(redisManager());
-        //session在redis中的保存时间,最好大于session会话超时时间
-        redisSessionDAO.setExpire(12000);
-        //sessionId生成器
-        redisSessionDAO.setSessionIdGenerator(sessionIdGenerator());
-        return redisSessionDAO;
-    }
-
-    /**
-     * 配置会话ID生成器
-     */
-    @Bean
-    public SessionIdGenerator sessionIdGenerator() {
-        return new JavaUuidSessionIdGenerator();
-    }
-
-    //配置Redis缓存 存储权限和角色标识
-    public RedisCacheManager redisCacheManager(){
-        RedisCacheManager redisCacheManager = new RedisCacheManager();
-        redisCacheManager.setRedisManager(redisManager());
-        redisCacheManager.setKeyPrefix("shiro:cache:");
-        //redis中针对不同用户缓存,user对象的userName属性
-        redisCacheManager.setPrincipalIdFieldName("userName");
-        //用户权限信息缓存时间
-        redisCacheManager.setExpire(200000);
-        return redisCacheManager;
     }
 
     //手动创建ShiroRealm类，需要继承shiro提供的realm,提供用户的身份和权限信息
@@ -147,6 +64,82 @@ public class ShiroConfig {
         return userRealm;
     }
 
+    //密码比较器
+    @Bean
+    public HashedCredentialsMatcher credentialsMatcher(){
+        HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
+        //设置加密算法
+        credentialsMatcher.setHashAlgorithmName("MD5");
+        //加密次数
+        credentialsMatcher.setHashIterations(2);
+        return credentialsMatcher;
+    }
+
+
+    //会话管理器
+    @Bean
+    public SessionManager sessionManager(){
+		//DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
+        ShiroSessionManager sessionManager = new ShiroSessionManager();
+        List<SessionListener> listeners = new ArrayList<>();
+
+        //配置监听
+        listeners.add(sessionListener());
+        sessionManager.setSessionListeners(listeners);
+        sessionManager.setSessionDAO(redisSessionDAO());
+        sessionManager.setCacheManager(redisCacheManager());
+        sessionManager.setSessionIdCookie(cookie());
+        sessionManager.setSessionIdUrlRewritingEnabled(false);
+        return sessionManager;
+    }
+
+    @Bean
+    public SimpleCookie cookie(){
+        SimpleCookie cookie = new SimpleCookie("SHARE_JSESSIONID"); //  cookie的name,对应的默认是 JSESSIONID
+        cookie.setHttpOnly(true);
+        cookie.setPath("/");        //  path为 / 用于多个系统共享JSESSIONID
+        //-1表示浏览器关闭时此cookie失效
+        cookie.setMaxAge(-1);
+        return cookie;
+    }
+
+    /**
+     * Redis管理器
+     */
+    @Bean
+    public RedisManager redisManager() {
+        RedisManager redisManager = new RedisManager();
+        redisManager.setHost(host);
+        return redisManager;
+    }
+
+    /**
+     * SessionDAO的作用是为Session提供CRUD并进行持久化的一个shiro组件
+     * MemorySessionDAO 直接在内存中进行会话维护
+     * EnterpriseCacheSessionDAO  提供了缓存功能的会话维护，默认情况下使用MapCache实现，内部使用ConcurrentHashMap保存缓存的会话。
+     */
+    @Bean
+    public RedisSessionDAO redisSessionDAO(){
+        RedisSessionDAO redisSessionDAO = new RedisSessionDAO();
+        redisSessionDAO.setRedisManager(redisManager());
+        redisSessionDAO.setSessionIdGenerator(sessionIdGenerator());
+        //session在redis中的保存时间,最好大于session会话超时时间
+        redisSessionDAO.setExpire(2000);
+        return redisSessionDAO;
+    }
+
+    @Bean
+    public JavaUuidSessionIdGenerator sessionIdGenerator(){
+        return new JavaUuidSessionIdGenerator();
+    }
+
+    //配置Redis缓存 存储权限和角色标识
+    public RedisCacheManager redisCacheManager(){
+        RedisCacheManager redisCacheManager = new RedisCacheManager();
+        redisCacheManager.setRedisManager(redisManager());
+        return redisCacheManager;
+    }
+
     /**
      * shiro请求过滤器
      * Web应用中,Shiro可控制的Web请求必须经过Shiro主过滤器的拦截
@@ -167,13 +160,15 @@ public class ShiroConfig {
         filterChainDefinitionMap.put("/login", "anon");
         //访问注册方法不受限制
         filterChainDefinitionMap.put("/toRegister", "anon");
+        //退出过滤器,具体的退出代码Shiro已经实现，登出后跳转配置的loginUrl
+        filterChainDefinitionMap.put("/logout", "logout");
         // 除上以外所有url都必须认证通过才可以访问，未通过认证自动访问LoginUrl
-		filterChainDefinitionMap.put("/**", "authc");
-
+        filterChainDefinitionMap.put("/**", "authc");
+        // 配置shiro默认登录界面地址，前后端分离中登录界面跳转应由前端路由控制，后台仅返回json数据
+        shiroFilterFactoryBean.setLoginUrl("/unLogin");
         shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainDefinitionMap);
         return shiroFilterFactoryBean;
     }
-
 
     /**
      * 开启Shiro-aop注解支持 使用代理方式所以需要开启代码支持
@@ -185,30 +180,6 @@ public class ShiroConfig {
         return authorizationAttributeSourceAdvisor;
     }
 
-    //密码比较器
-    @Bean
-    public HashedCredentialsMatcher credentialsMatcher(){
-        HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
-        //设置加密算法
-        credentialsMatcher.setHashAlgorithmName("MD5");
-        //加密次数
-        credentialsMatcher.setHashIterations(2);
-        //存储为16进制
-        credentialsMatcher.setStoredCredentialsHexEncoded(true);
-        return credentialsMatcher;
-    }
-
-    /**
-     * Redis管理器
-     */
-    @Bean
-    public RedisManager redisManager() {
-        RedisManager redisManager = new RedisManager();
-        redisManager.setHost(host);
-        redisManager.setTimeout(timeout);
-        return redisManager;
-    }
-
     /**
      * 配置session监听
      */
@@ -216,4 +187,13 @@ public class ShiroConfig {
     public SessionListener sessionListener(){
         return new ShiroSessionListener();
     }
+
+    //自动创建代理，没有这个鉴权可能会出错
+    @Bean
+    public DefaultAdvisorAutoProxyCreator getDefaultAdvisorAutoProxyCreator() {
+        DefaultAdvisorAutoProxyCreator autoProxyCreator = new DefaultAdvisorAutoProxyCreator();
+        autoProxyCreator.setProxyTargetClass(true);
+        return autoProxyCreator;
+    }
+
 }

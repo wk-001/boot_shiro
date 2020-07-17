@@ -43,18 +43,11 @@ public class UserRealm extends AuthorizingRealm {
         if (user.getEnable() == 0)
             throw new LockedAccountException("该账号不可用！");
 
-        try {
-            user.setPassword(null);
-            SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(user,user.getPassword(), new MySimpleByteSource(user.getSalt()),getName());
-            //验证成功开始踢人(清除缓存和Session)
-            ShiroUtils.deleteCache(user.getUsername(),true);
-            log.info("用户："+userName+"认证成功");
-            return info;
-        } catch (AuthenticationException e) {
-            e.printStackTrace();
-            log.error("用户："+userName+"认证失败");
-        }
-        return null;
+        SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(user,user.getPassword(), new MySimpleByteSource(user.getSalt()),getName());
+        //验证成功开始踢人(清除缓存和Session)
+        ShiroUtils.deleteCache(user.getUsername(),true);
+        log.info("用户："+userName+"认证成功");
+        return info;
     }
 
     /**

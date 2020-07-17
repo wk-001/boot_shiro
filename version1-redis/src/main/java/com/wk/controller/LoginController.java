@@ -9,8 +9,10 @@ import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,8 +41,7 @@ public class LoginController {
 			map.put("user", userInfo);
 			map.put("roles", roleService.getRolesByUserId(userInfo.getId()));
 			map.put("resources", resourceService.getResourcesByUserId(userInfo.getId()));
-
-			userInfo.setPassword(null);
+			map.put("token", ShiroUtils.getSession().getId().toString());
 			ShiroUtils.getSession().setAttribute("user", userInfo);
 			return Result.ok(map);
 		} catch (IncorrectCredentialsException e) {
@@ -52,4 +53,14 @@ public class LoginController {
 		}
 	}
 
+	@GetMapping("unLogin")
+	public Result<Void> unLogin(){
+		return Result.fail("未登录！");
+	}
+
+	@RequiresAuthentication
+	@GetMapping("logout")
+	public void logout(){
+		SecurityUtils.getSubject().logout();
+	}
 }
