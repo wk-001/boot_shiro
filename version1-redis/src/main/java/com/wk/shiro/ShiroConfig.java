@@ -93,6 +93,7 @@ public class ShiroConfig {
         return sessionManager;
     }
 
+    //设置cookie信息
     @Bean
     public SimpleCookie cookie(){
         SimpleCookie cookie = new SimpleCookie("SHARE_JSESSIONID"); //  cookie的name,对应的默认是 JSESSIONID
@@ -137,6 +138,8 @@ public class ShiroConfig {
     public RedisCacheManager redisCacheManager(){
         RedisCacheManager redisCacheManager = new RedisCacheManager();
         redisCacheManager.setRedisManager(redisManager());
+        //设置角色信息和权限信息的缓存时间，单位：秒
+        redisCacheManager.setExpire(3600);
         return redisCacheManager;
     }
 

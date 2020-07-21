@@ -1,6 +1,7 @@
 package com.wk.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -9,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
+import java.util.HashSet;
 
 /**
  * <p>
@@ -42,5 +44,21 @@ public class User implements Serializable {
      */
     private Integer enable;
 
+    /**
+     * 令牌 非数据库字段
+     */
+    @TableField(exist = false)
+    private String token;
 
+    /**
+     * 角色标识符 非数据库字段
+     */
+    @TableField(exist = false)
+    private HashSet<String> roleCode;
+
+    /**
+     * 权限标识符 非数据库字段
+     */
+    @TableField(exist = false)
+    private HashSet<String> resourceCode;
 }

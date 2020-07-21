@@ -12,7 +12,10 @@
 	<artifactId>version1-redis</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>version1-redis</name>
-	<description>Spring Boot shiro redis整合</description>
+	<description>
+		Spring Boot shiro redis整合1.0版 使用session做前后端分离
+		登录成功后返回token，发送需要验证资源的请求时需要在请求头设置 Authorization:token
+	</description>
 
 	<properties>
 		<java.version>1.8</java.version>

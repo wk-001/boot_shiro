@@ -43,6 +43,16 @@ public class UserRealm extends AuthorizingRealm {
         if (user.getEnable() == 0)
             throw new LockedAccountException("该账号不可用！");
 
+        Integer userId = user.getId();
+
+        HashSet<String> roles = roleService.getRolesByUserId(userId);
+        Assert.notEmpty(roles, "请分配角色");
+        user.setRoleCode(roles);
+
+        HashSet<String> resources = resourceService.getResourcesByUserId(userId);
+        Assert.notEmpty(resources, "请授权");
+        user.setResourceCode(resources);
+
         SimpleAuthenticationInfo info = new SimpleAuthenticationInfo(user,user.getPassword(), new MySimpleByteSource(user.getSalt()),getName());
         //验证成功开始踢人(清除缓存和Session)
         ShiroUtils.deleteCache(user.getUsername(),true);
@@ -57,16 +67,11 @@ public class UserRealm extends AuthorizingRealm {
     protected AuthorizationInfo doGetAuthorizationInfo(PrincipalCollection principal) {
         User user = (User) principal.getPrimaryPrincipal();
         log.info("用户："+user.getUsername()+"开始授权");
-        Integer userId = user.getId();
+
         //将用户的角色编码和资源标识放入认证信息
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
-        HashSet<String> roles = roleService.getRolesByUserId(userId);
-        Assert.notEmpty(roles, "请分配角色");
-        info.setRoles(roles);
-
-        HashSet<String> resources = resourceService.getResourcesByUserId(userId);
-        Assert.notEmpty(resources, "请授权");
-        info.setStringPermissions(resources);
+        info.setRoles(user.getRoleCode());
+        info.setStringPermissions(user.getResourceCode());
 
         log.info("用户："+user.getUsername()+"授权成功");
         return info;

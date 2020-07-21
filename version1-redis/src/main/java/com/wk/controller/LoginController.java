@@ -17,9 +17,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @RestController
 public class LoginController {
 
@@ -30,20 +27,16 @@ public class LoginController {
 	private ResourceService resourceService;
 
 	@PostMapping("login")
-	public Result<Map<String,Object>> login(@Validated @RequestBody User user){
+	public Result<User> login(@Validated @RequestBody User user){
+
 		UsernamePasswordToken token = new UsernamePasswordToken(user.getUsername(),user.getPassword());
 
 		try {
 			SecurityUtils.getSubject().login(token);
 			User userInfo = ShiroUtils.getUserInfo();
 			//返回前端需要的用户数据
-			Map<String,Object> map = new HashMap<>();
-			map.put("user", userInfo);
-			map.put("roles", roleService.getRolesByUserId(userInfo.getId()));
-			map.put("resources", resourceService.getResourcesByUserId(userInfo.getId()));
-			map.put("token", ShiroUtils.getSession().getId().toString());
-			ShiroUtils.getSession().setAttribute("user", userInfo);
-			return Result.ok(map);
+			userInfo.setToken(ShiroUtils.getSession().getId().toString());
+			return Result.ok(userInfo);
 		} catch (IncorrectCredentialsException e) {
 			e.printStackTrace();
 			return Result.fail("账号或密码错误!");
