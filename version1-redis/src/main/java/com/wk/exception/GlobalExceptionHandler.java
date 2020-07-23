@@ -3,6 +3,7 @@ package com.wk.exception;
 import com.wk.common.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.shiro.ShiroException;
+import org.apache.shiro.authz.UnauthenticatedException;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
@@ -25,12 +26,20 @@ public class GlobalExceptionHandler {
 	 * shiro相关异常
 	 */
 
-	@ExceptionHandler(value = UnauthorizedException.class)
 	@ResponseStatus(HttpStatus.FORBIDDEN)
-	public void handleUnauthorizedException(Exception e) {
+	@ExceptionHandler(value = UnauthorizedException.class)
+	public Result<String> handleUnauthorizedException(Exception e) {
 		log.error("权限不足：{}", e.getMessage());
+		return Result.fail(403,"权限不足：{}"+e.getMessage(),null);
 	}
-	
+
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	@ExceptionHandler(value = UnauthenticatedException.class)
+	public Result<String> handleUnauthenticatedException(Exception e) {
+		log.error("认证失败：{}", e.getMessage());
+		return Result.fail(401,"认证失败：{}"+e.getMessage(),null);
+	}
+
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)	//返回状态码
 	@ExceptionHandler(ShiroException.class)		//要捕获的异常
 	public Result<String> handler(ShiroException e){
