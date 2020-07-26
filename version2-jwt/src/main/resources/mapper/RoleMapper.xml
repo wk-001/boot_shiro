@@ -14,4 +14,15 @@
         id, role_name, role_code
     </sql>
 
+    <select id="getRolesByUserId" resultType="string">
+        SELECT
+            r.role_code
+        FROM
+            role r,
+            user_role ur
+        WHERE
+            r.id = ur.role_id
+            AND ur.user_id = #{userId}
+    </select>
+
 </mapper>

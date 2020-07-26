@@ -30,21 +30,21 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(value = UnauthorizedException.class)
 	public Result<String> handleUnauthorizedException(Exception e) {
 		log.error("权限不足：{}", e.getMessage());
-		return Result.fail(403,"权限不足：{}"+e.getMessage(),null);
+		return Result.fail(403,"权限不足："+e.getMessage(),null);
 	}
 
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)
 	@ExceptionHandler(value = UnauthenticatedException.class)
 	public Result<String> handleUnauthenticatedException(Exception e) {
 		log.error("认证失败：{}", e.getMessage());
-		return Result.fail(401,"认证失败：{}"+e.getMessage(),null);
+		return Result.fail(401,"认证失败："+e.getMessage(),null);
 	}
 
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)	//返回状态码
 	@ExceptionHandler(ShiroException.class)		//要捕获的异常
 	public Result<String> handler(ShiroException e){
 		log.error("shiro异常：{}",e.getMessage());
-		return Result.fail(401,e.getMessage(),null);
+		return Result.fail(401,"shiro异常："+e.getMessage(),null);
 	}
 
 	/**
@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(value = IllegalArgumentException.class)
 	public Result<String> handler(IllegalArgumentException e) throws IOException {
 		log.error("Assert异常：{}",e.getMessage());
-		return Result.fail(e.getMessage());
+		return Result.fail("Assert异常："+e.getMessage());
 	}
 
 	/**
@@ -66,7 +66,7 @@ public class GlobalExceptionHandler {
 		log.error("实体校验异常：{}",e.getMessage());
 		BindingResult bindingResult = e.getBindingResult();
 		ObjectError objectError = bindingResult.getAllErrors().stream().findFirst().get();
-		return Result.fail(objectError.getDefaultMessage());
+		return Result.fail("实体校验异常："+objectError.getDefaultMessage());
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(RuntimeException.class)	//要捕获的异常
 	public Result<String> handler(RuntimeException e){
 		log.error("运行时异常：{}",e.getMessage());
-		return Result.fail(e.getMessage());
+		return Result.fail("运行时异常："+e.getMessage());
 	}
 
 }

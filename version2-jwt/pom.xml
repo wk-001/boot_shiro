@@ -5,14 +5,22 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.2.6.RELEASE</version>
+        <version>2.1.8.RELEASE</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.wk</groupId>
     <artifactId>version2-jwt</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>version2-jwt</name>
-    <description>Spring Boot、shiro、redis、jwt 整合</description>
+    <description>
+        Spring Boot、shiro、redis、jwt 整合
+        发送请求先经过JwtFilter，如果是登录注册的请求直接放行到controller进行登录，判断其他请求的请求头是否有token
+        如果没有token则调用sendChallenge方法返回异常信息
+        存在token则调用executeLogin方法中shiro的login方法，将token提交到UserRealm进行认证
+        loginController：
+            查询用户是否存在，对比密码是否一致，
+            生成token、查询用户信息、角色、权限信息放入到Redis中并返回给前端
+    </description>
 
     <properties>
         <java.version>1.8</java.version>
@@ -73,6 +81,28 @@
             <artifactId>hutool-all</artifactId>
             <version>5.3.5</version>
         </dependency>
+
+        <!-- jwt -->
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>3.8.2</version>
+        </dependency>
+
+        <!-- Shiro-redis插件 -->
+        <dependency>
+            <groupId>org.crazycake</groupId>
+            <artifactId>shiro-redis</artifactId>
+            <version>3.2.3</version>
+        </dependency>
+
+        <!-- fastjson -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            <version>1.2.72</version>
+        </dependency>
+
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

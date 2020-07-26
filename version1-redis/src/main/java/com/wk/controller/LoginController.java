@@ -54,6 +54,6 @@ public class LoginController {
 	@RequiresAuthentication
 	@GetMapping("logout")
 	public void logout(){
-		SecurityUtils.getSubject().logout();
+		ShiroUtils.logout();
 	}
 }

@@ -16,4 +16,17 @@
         id, name, permission, parent_id, type
     </sql>
 
+    <select id="getResourcesByUserId" resultType="string">
+        SELECT
+            r.permission
+        FROM
+            resource r,
+            role_resource rr,
+            user_role ur
+        WHERE
+            r.id = rr.resource_id
+            AND rr.role_id = ur.role_id
+            AND ur.user_id = #{userId}
+    </select>
+
 </mapper>
