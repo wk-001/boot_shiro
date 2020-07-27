@@ -8,6 +8,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 @Data
@@ -15,7 +17,7 @@ public class LoginUser extends User implements UserDetails {
 
 	private static final long serialVersionUID = -1379274258881257107L;
 
-	private Set<String> permissions;
+	private List<String> permissions;
 	private String token;
 	/** 登陆时间戳（毫秒） */
 	private Long loginTime;

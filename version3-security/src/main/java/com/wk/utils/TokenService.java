@@ -1,7 +1,9 @@
 package com.wk.utils;
 
+import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSON;
 import com.wk.common.RedisConstant;
+import com.wk.common.Result;
 import com.wk.dto.LoginUser;
 import io.jsonwebtoken.*;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +41,7 @@ public class TokenService {
 
 	public LoginUser getLoginUser(HttpServletRequest request) {
 		//从请求头中获取token
-		String token = request.getHeader(this.header);
+		String token = request.getHeader(header);
 		if (StringUtils.isNotBlank(token)) {
 			//解析token，获取token载荷中的uuid
 			String uuid = parseToken(token);
@@ -96,4 +99,31 @@ public class TokenService {
 		String userKey = getTokenKey(loginUser.getToken());
 		redisTemplate.boundValueOps(userKey).set(JSON.toJSONString(loginUser),expireTime,TimeUnit.SECONDS);
 	}
+
+	/**
+	 * 删除用户身份信息
+	 */
+	public void delLoginUser(String token) {
+		if (StringUtils.isNotEmpty(token)) {
+			String userKey = getTokenKey(token);
+			redisTemplate.delete(userKey);
+		}
+	}
+
+	/**
+	 * 创建令牌
+	 */
+	public String createToken(LoginUser loginUser) {
+		String token = IdUtil.fastSimpleUUID();
+		loginUser.setToken(token);
+		refreshToken(loginUser);
+
+		Map<String, Object> claims = new HashMap<>();
+		claims.put(RedisConstant.LOGIN_TOKEN, token);
+
+		return Jwts.builder()
+				.setClaims(claims)
+				.signWith(SignatureAlgorithm.HS512, secret).compact();
+	}
+
 }

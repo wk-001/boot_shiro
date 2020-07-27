@@ -3,6 +3,8 @@ package com.wk.security;
 import com.wk.common.Result;
 import com.wk.dto.LoginUser;
 import com.wk.utils.ResponseUtil;
+import com.wk.utils.TokenService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -22,56 +24,12 @@ import java.io.IOException;
 @Configuration
 public class SecurityHandler {
 
-	/**
-	 * 登陆成功，返回Token
-	 * 
-	 * @return
-	 */
-	@Bean
-	public AuthenticationSuccessHandler loginSuccessHandler() {
-		return new AuthenticationSuccessHandler() {
+	@Autowired
+	private TokenService tokenService;
 
-			@Override
-			public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-												Authentication authentication) throws IOException, ServletException {
-				//获取登录用户
-				LoginUser loginUser = (LoginUser) authentication.getPrincipal();
-
-				/*Token token = tokenService.saveToken(loginUser);
-				ResponseUtil.responseJson(response, HttpStatus.OK.value(), token);*/
-			}
-		};
-	}
-
-	/**
-	 * 登陆失败
-	 * 
-	 * @return
-	 */
-	@Bean
-	public AuthenticationFailureHandler loginFailureHandler() {
-		return new AuthenticationFailureHandler() {
-
-			@Override
-			public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response,
-												AuthenticationException exception) throws IOException, ServletException {
-				String msg = null;
-				if (exception instanceof BadCredentialsException) {
-					msg = "密码错误";
-				} else {
-					msg = "认证失败，无法访问系统资源："+exception.getMessage();
-				}
-				Result<Object> fail = Result.fail(HttpStatus.UNAUTHORIZED.value(), msg);
-				ResponseUtil.responseJson(response, HttpStatus.UNAUTHORIZED.value(), fail);
-			}
-		};
-
-	}
 
 	/**
 	 * 未登录，返回401
-	 * 
-	 * @return
 	 */
 	@Bean
 	public AuthenticationEntryPoint authenticationEntryPoint() {
@@ -79,8 +37,14 @@ public class SecurityHandler {
 
 			@Override
 			public void commence(HttpServletRequest request, HttpServletResponse response,
-								 AuthenticationException authException) throws IOException, ServletException {
-				Result<Object> fail = Result.fail(HttpStatus.UNAUTHORIZED.value(), "请登录");
+								 AuthenticationException exception) throws IOException, ServletException {
+				String msg;
+				if (exception instanceof BadCredentialsException) {
+					msg = "账号或密码错误";
+				} else {
+					msg = "认证失败，无法访问系统资源："+exception.getMessage();
+				}
+				Result<Object> fail = Result.fail(HttpStatus.UNAUTHORIZED.value(), msg);
 				ResponseUtil.responseJson(response, HttpStatus.UNAUTHORIZED.value(), fail);
 			}
 		};
@@ -88,8 +52,6 @@ public class SecurityHandler {
 
 	/**
 	 * 退出处理
-	 * 
-	 * @return
 	 */
 	@Bean
 	public LogoutSuccessHandler logoutSussHandler() {
@@ -98,12 +60,11 @@ public class SecurityHandler {
 			@Override
 			public void onLogoutSuccess(HttpServletRequest request, HttpServletResponse response,
 										Authentication authentication) throws IOException, ServletException {
-				/*ResponseInfo info = new ResponseInfo(HttpStatus.OK.value() + "", "退出成功");
+				LoginUser loginUser = tokenService.getLoginUser(request);
+				tokenService.delLoginUser(loginUser.getToken());
 
-				String token = TokenFilter.getToken(request);
-				tokenService.deleteToken(token);
-
-				ResponseUtil.responseJson(response, HttpStatus.OK.value(), info);*/
+				Result<Object> ok = Result.ok("退出成功");
+				ResponseUtil.responseJson(response, HttpStatus.OK.value(), ok);
 			}
 		};
 
