@@ -1,6 +1,7 @@
 package com.wk.jwt;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.wk.common.Result;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -108,10 +109,8 @@ public class JwtFilter extends BasicHttpAuthenticationFilter {
         httpResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
         httpResponse.setCharacterEncoding("utf-8");
         httpResponse.setContentType("application/json; charset=utf-8");
-        final String message = "认证失败";
         try (PrintWriter out = httpResponse.getWriter()) {
-            String responseJson = "{\"message\":\"" + message + "\"}";
-            out.print(responseJson);
+            out.print(JSON.toJSONString(Result.fail(401, "认证失败，无法访问系统资源", null)));
         } catch (IOException e) {
             e.printStackTrace();
         }
