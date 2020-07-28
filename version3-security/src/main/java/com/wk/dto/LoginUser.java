@@ -3,16 +3,18 @@ package com.wk.dto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.wk.domain.User;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 @Data
+@EqualsAndHashCode(callSuper = false)
+@Accessors(chain = true)
 public class LoginUser extends User implements UserDetails {
 
 	private static final long serialVersionUID = -1379274258881257107L;

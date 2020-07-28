@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wk.domain.Role;
 import com.wk.service.RoleService;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,7 +18,7 @@ public class RoleController {
     /**
      * 查询分页数据
      */
-    @RequiresPermissions("role:view")
+    @PreAuthorize("hasAuthority('role:view')")
     @GetMapping
     public IPage<Role> findListByPage(@RequestParam(name = "pageNum", defaultValue = "1") int pageNum, @RequestParam(name = "pageSize", defaultValue = "20") int pageSize){
         return roleService.page(new Page<>(pageNum,pageSize));
@@ -27,7 +27,7 @@ public class RoleController {
     /**
      * 根据id查询
      */
-    @RequiresPermissions("role:view")
+    @PreAuthorize("hasAuthority('role:view')")
     @GetMapping("{id}")
     public Role getById(@PathVariable("id") Long id) {
         return roleService.getById(id);
@@ -36,7 +36,7 @@ public class RoleController {
     /**
      * 新增
      */
-    @RequiresPermissions("role:add")
+    @PreAuthorize("hasAuthority('role:add')")
     @PostMapping
     public void insert (@RequestBody Role role){
         roleService.save(role);
@@ -45,7 +45,7 @@ public class RoleController {
     /**
      * 删除
      */
-    @RequiresPermissions("role:delete")
+    @PreAuthorize("hasAuthority('role:delete')")
     @DeleteMapping("{id}")
     public void deleteById(@PathVariable("id") Long id) {
         roleService.removeById(id);
@@ -54,7 +54,7 @@ public class RoleController {
     /**
      * 修改
      */
-    @RequiresPermissions("role:update")
+    @PreAuthorize("hasAuthority('role:update')")
     @PutMapping
     public void updateById(@RequestBody Role role){
         roleService.updateById(role);

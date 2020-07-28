@@ -3,9 +3,10 @@ package com.wk.utils;
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson.JSON;
 import com.wk.common.RedisConstant;
-import com.wk.common.Result;
 import com.wk.dto.LoginUser;
-import io.jsonwebtoken.*;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,7 +96,7 @@ public class TokenService {
 		long now = System.currentTimeMillis();
 		loginUser.setLoginTime(now);
 		loginUser.setExpireTime(now + expireTime * 1000);
-		// 根据uuid将loginUser缓存
+		// 根据uuid缓存loginUser
 		String userKey = getTokenKey(loginUser.getToken());
 		redisTemplate.boundValueOps(userKey).set(JSON.toJSONString(loginUser),expireTime,TimeUnit.SECONDS);
 	}

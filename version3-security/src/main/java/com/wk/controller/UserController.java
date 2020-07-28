@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wk.domain.User;
 import com.wk.service.UserService;
-import org.apache.shiro.authz.annotation.RequiresPermissions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,7 +18,7 @@ public class UserController {
     /**
      * 查询分页数据
      */
-    @RequiresPermissions("user:view")
+    @PreAuthorize("hasAuthority('user:view')")
     @GetMapping
     public IPage<User> findListByPage(@RequestParam(name = "pageNum", defaultValue = "1") int pageNum, @RequestParam(name = "pageSize", defaultValue = "20") int pageSize){
         return userService.page(new Page<>(pageNum,pageSize));
@@ -27,7 +27,7 @@ public class UserController {
     /**
      * 根据id查询
      */
-    @RequiresPermissions("user:view")
+    @PreAuthorize("hasAuthority('user:view')")
     @GetMapping("{id}")
     public User getById(@PathVariable("id") Long id) {
         return userService.getById(id);
@@ -36,7 +36,7 @@ public class UserController {
     /**
      * 新增
      */
-    @RequiresPermissions("user:add")
+    @PreAuthorize("hasAuthority('user:add')")
     @PostMapping
     public void insert (@RequestBody User user){
         userService.save(user);
@@ -45,7 +45,7 @@ public class UserController {
     /**
      * 删除
      */
-    @RequiresPermissions("user:delete")
+    @PreAuthorize("hasAuthority('user:delete')")
     @DeleteMapping("{id}")
     public void deleteById(@PathVariable("id") Long id) {
         userService.removeById(id);
@@ -54,7 +54,7 @@ public class UserController {
     /**
      * 修改
      */
-    @RequiresPermissions("user:update")
+    @PreAuthorize("hasAuthority('user:update')")
     @PutMapping
     public void updateById(@RequestBody User user){
         userService.updateById(user);
