@@ -1,24 +1,19 @@
 package com.wk.controller;
 
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.wk.common.RedisConstant;
 import com.wk.common.Result;
 import com.wk.domain.User;
-import com.wk.jwt.JWTToken;
 import com.wk.jwt.JWTUtil;
 import com.wk.service.ResourceService;
 import com.wk.service.RoleService;
 import com.wk.service.UserService;
 import com.wk.shiro.ShiroUtil;
-import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.IncorrectCredentialsException;
 import org.apache.shiro.authz.UnauthorizedException;
 import org.apache.shiro.authz.annotation.RequiresAuthentication;
 import org.apache.shiro.crypto.hash.SimpleHash;
-import org.apache.shiro.util.Assert;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -67,8 +62,7 @@ public class LoginController {
 
         //生成token
         String token = JWTUtil.sign(userId, encodedPassword);
-
-        redisTemplate.boundValueOps(RedisConstant.USER_TOKEN + token).set(token, 30, TimeUnit.MINUTES);
+        dbUser.setToken(token);
 
         //返回前端需要的数据 token、角色、权限
         HashSet<String> roles = roleService.getRolesByUserId(userId);
@@ -77,8 +71,8 @@ public class LoginController {
         HashSet<String> resources = resourceService.getResourcesByUserId(userId);
         dbUser.setResourceCode(resources);
 
-        dbUser.setToken(token);
-
+        dbUser.setPassword("");
+        dbUser.setSalt("");
         redisTemplate.boundValueOps(RedisConstant.USER_INFO + userId).set(JSON.toJSONString(dbUser), 30, TimeUnit.MINUTES);
 
         return Result.ok(dbUser);
@@ -90,7 +84,6 @@ public class LoginController {
         String token = req.getHeader(TOKEN);
         String userId = JWTUtil.getUserId(token);
         redisTemplate.delete(RedisConstant.USER_INFO + userId);
-        redisTemplate.delete(RedisConstant.USER_TOKEN + token);
         ShiroUtil.logout();
         redisTemplate.delete(RedisConstant.SHIRO_AUTHOR + userId);
     }

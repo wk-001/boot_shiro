@@ -73,7 +73,8 @@ public class UserRealm extends AuthorizingRealm {
     }
 
     private void refreshToken(String token) {
-        BoundValueOperations<String, String> valueOps = redisTemplate.boundValueOps(RedisConstant.USER_TOKEN + token);
+        String userId = JWTUtil.getUserId(token);
+        BoundValueOperations<String, String> valueOps = redisTemplate.boundValueOps(RedisConstant.USER_INFO + userId);
 
         Long expire = valueOps.getExpire();
         //如果token过期时间小于10分钟就刷新过期时间
