@@ -23,7 +23,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Autowired
     private ResourceService resourceService;
 
-
+    /**
+     * 认证授权，相当于shiro的realm
+     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userService.getOne(new QueryWrapper<User>().eq("username", username));
@@ -36,6 +38,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         LoginUser loginUser = new LoginUser();
         BeanUtils.copyProperties(user, loginUser);
 
+        //设置权限标识符到对象中
         loginUser.setPermissions(resourceService.getResourcesByUserId(user.getId()));
 
         return loginUser;

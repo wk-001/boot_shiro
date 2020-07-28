@@ -40,12 +40,16 @@ public class TokenService {
 	@Autowired
 	private StringRedisTemplate redisTemplate;
 
+	/**
+	 * 解析request中的token，根据载荷拼接key，获取Redis中的用户信息
+	 */
 	public LoginUser getLoginUser(HttpServletRequest request) {
 		//从请求头中获取token
 		String token = request.getHeader(header);
 		if (StringUtils.isNotBlank(token)) {
 			//解析token，获取token载荷中的uuid
 			String uuid = parseToken(token);
+			//根据uuid获取Redis中对应的数据
 			String loginUserStr = redisTemplate.boundValueOps(getTokenKey(uuid)).get();
 			return JSON.parseObject(loginUserStr, LoginUser.class);
 		}
@@ -88,8 +92,7 @@ public class TokenService {
 	}
 
 	/**
-	 * 刷新令牌有效期
-	 *
+	 * 重置令牌有效期
 	 * @param loginUser 登录信息
 	 */
 	public void refreshToken(LoginUser loginUser){
@@ -106,8 +109,7 @@ public class TokenService {
 	 */
 	public void delLoginUser(String token) {
 		if (StringUtils.isNotEmpty(token)) {
-			String userKey = getTokenKey(token);
-			redisTemplate.delete(userKey);
+			redisTemplate.delete(getTokenKey(token));
 		}
 	}
 
@@ -115,11 +117,14 @@ public class TokenService {
 	 * 创建令牌
 	 */
 	public String createToken(LoginUser loginUser) {
+		//uuid做为key
 		String token = IdUtil.fastSimpleUUID();
+		//uuid存放到对象中
 		loginUser.setToken(token);
 		refreshToken(loginUser);
 
 		Map<String, Object> claims = new HashMap<>();
+		//uuid作为载荷生成token
 		claims.put(RedisConstant.LOGIN_TOKEN, token);
 
 		return Jwts.builder()

@@ -10,7 +10,7 @@ import lombok.experimental.Accessors;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.Set;
 
 /**
  * <p>
@@ -54,12 +54,12 @@ public class User implements Serializable {
      * 角色标识符 非数据库字段
      */
     @TableField(exist = false)
-    private HashSet<String> roleCode;
+    private Set<String> roleCode;
 
     /**
      * 权限标识符 非数据库字段
      */
     @TableField(exist = false)
-    private HashSet<String> resourceCode;
+    private Set<String> resourceCode;
 
 }

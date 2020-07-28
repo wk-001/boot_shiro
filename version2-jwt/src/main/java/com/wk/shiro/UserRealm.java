@@ -92,7 +92,7 @@ public class UserRealm extends AuthorizingRealm {
         User user = (User) principal.getPrimaryPrincipal();
         String userStr = redisTemplate.boundValueOps(RedisConstant.USER_INFO + user.getId()).get();
         user = JSON.parseObject(userStr, User.class);
-        Assert.notNull(user, "token或用户数据不存在，请先登录");
+        Assert.notNull(user, "token或用户数据不存在，请重新登录");
         //将用户的角色编码和资源标识放入认证信息
         SimpleAuthorizationInfo info = new SimpleAuthorizationInfo();
         info.setRoles(user.getRoleCode());
