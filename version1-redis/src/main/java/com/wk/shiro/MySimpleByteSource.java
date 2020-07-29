@@ -42,11 +42,11 @@ public class MySimpleByteSource implements ByteSource, Serializable {
 	}
 
 	public MySimpleByteSource(File file) {
-		this.bytes = (new MySimpleByteSource.BytesHelper()).getBytes(file);
+		this.bytes = (new BytesHelper()).getBytes(file);
 	}
 
 	public MySimpleByteSource(InputStream stream) {
-		this.bytes = (new MySimpleByteSource.BytesHelper()).getBytes(stream);
+		this.bytes = (new BytesHelper()).getBytes(stream);
 	}
 
 	public static boolean isCompatible(Object o) {
