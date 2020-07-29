@@ -113,7 +113,7 @@ public class ShiroConfig {
     @Bean
     public RedisManager redisManager() {
         RedisManager redisManager = new RedisManager();
-        redisManager.setHost(host);
+        redisManager.setHost(host+":"+port);
         return redisManager;
     }
 
