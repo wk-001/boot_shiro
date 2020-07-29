@@ -45,6 +45,11 @@ public class UserRealm extends AuthorizingRealm {
 
         Integer userId = user.getId();
 
+        /**
+         * 该项目角色和权限针对的是一个用户有多个角色的情况
+         * 如果一个用户对应一个角色，user对象设置roleCode为String类型
+         * 根据用户ID查询对应角色，再根据角色ID查询所有权限
+         */
         HashSet<String> roles = roleService.getRolesByUserId(userId);
         Assert.notEmpty(roles, "请分配角色");
         user.setRoleCode(roles);

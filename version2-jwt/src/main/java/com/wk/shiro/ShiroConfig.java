@@ -1,7 +1,6 @@
 package com.wk.shiro;
 
 import com.wk.jwt.JwtFilter;
-import org.apache.shiro.authc.credential.HashedCredentialsMatcher;
 import org.apache.shiro.mgt.DefaultSessionStorageEvaluator;
 import org.apache.shiro.mgt.DefaultSubjectDAO;
 import org.apache.shiro.mgt.SecurityManager;
@@ -54,7 +53,7 @@ public class ShiroConfig {
         userRealm.setAuthorizationCachingEnabled(true);
         //缓存AuthorizationInfo信息的缓存名称
         userRealm.setAuthorizationCacheName("authorizationCache");
-        //配置密码比较器
+        //配置缓存管理器
         userRealm.setCacheManager(redisCacheManager());
         return userRealm;
     }
