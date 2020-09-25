@@ -3,7 +3,7 @@ package com.wk.shiro;
 import com.wk.domain.User;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.crypto.SecureRandomNumberGenerator;
-import org.apache.shiro.crypto.hash.SimpleHash;
+import org.apache.shiro.crypto.hash.Md5Hash;
 
 public class ShiroUtil {
 
@@ -32,7 +32,8 @@ public class ShiroUtil {
     public static User encryptPassword(User user) {
         String salt = new SecureRandomNumberGenerator().nextBytes().toString();
         int times = 2;
-        String encodedPassword = new SimpleHash("MD5", user.getPassword(), salt, times).toString();
+        //String encodedPassword = new SimpleHash("MD5", user.getPassword(), salt, times).toString();
+        String encodedPassword = new Md5Hash(user.getPassword(), salt, times).toString();
         user.setPassword(encodedPassword);
         user.setSalt(salt);
         return user;
