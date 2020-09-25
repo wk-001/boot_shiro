@@ -76,7 +76,6 @@ public class LoginController {
         HashSet<String> resources = resourceService.getResourcesByUserId(userId);
         dbUser.setResourceCode(resources);
 
-        dbUser.setPassword("");
         dbUser.setSalt("");
         redisTemplate.boundValueOps(RedisConstant.USER_INFO + userId).set(JSON.toJSONString(dbUser), 30, TimeUnit.MINUTES);
 
